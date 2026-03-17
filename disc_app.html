@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Analyse DISC — DM Academy</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --D:#E24B4A;--D-bg:#FCEBEB;--D-txt:#A32D2D;
+    --I:#EF9F27;--I-bg:#FAEEDA;--I-txt:#633806;
+    --S:#1D9E75;--S-bg:#E1F5EE;--S-txt:#085041;
+    --C:#378ADD;--C-bg:#E6F1FB;--C-txt:#0C447C;
+    --bg:#f8f9fa;--surface:#fff;--border:#e0e0e0;
+    --text:#1a1a1a;--text2:#555;--text3:#888;
+    --radius:10px;--radius-sm:6px;
+  }
+  body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  .app{max-width:700px;margin:0 auto;padding:20px 16px 60px}
+  .logo{text-align:center;padding:24px 0 8px;font-size:13px;color:var(--text3);font-weight:500;letter-spacing:1px;text-transform:uppercase}
+  .logo span{color:#378ADD;font-weight:700}
+
+  /* NAV */
+  .nav{display:flex;gap:6px;margin-bottom:24px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:6px}
+  .nav-btn{flex:1;padding:8px 4px;border:none;background:transparent;border-radius:var(--radius-sm);cursor:pointer;font-size:12px;color:var(--text2);transition:all .15s;font-family:inherit}
+  .nav-btn.active{background:#378ADD;color:#fff;font-weight:500}
+  .nav-btn:hover:not(.active){background:#f0f0f0}
+
+  /* LANG TOGGLE */
+  .lang-bar{display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px}
+  .lang-btn{padding:4px 12px;border:1px solid var(--border);border-radius:20px;background:transparent;cursor:pointer;font-size:12px;color:var(--text2);font-family:inherit}
+  .lang-btn.active{background:#378ADD;color:#fff;border-color:#378ADD}
+
+  /* CARDS */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px}
+  .card-sm{padding:14px 16px}
+
+  /* BUTTONS */
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:1px solid var(--border);border-radius:var(--radius-sm);background:transparent;cursor:pointer;font-size:14px;color:var(--text);font-family:inherit;transition:all .15s}
+  .btn:hover{background:#f0f0f0}
+  .btn-primary{background:#378ADD;border-color:#378ADD;color:#fff}
+  .btn-primary:hover{background:#185FA5}
+  .btn-sm{padding:6px 14px;font-size:13px}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+
+  /* PROGRESS */
+  .progress{height:6px;background:#eee;border-radius:3px;overflow:hidden;margin:8px 0 20px}
+  .progress-fill{height:100%;border-radius:3px;background:#378ADD;transition:width .4s}
+
+  /* DISC BADGES */
+  .disc-badge{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;font-size:18px;font-weight:700;color:#fff}
+  .badge-D{background:var(--D)}.badge-I{background:var(--I)}.badge-S{background:var(--S)}.badge-C{background:var(--C)}
+  .pill{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;margin:3px}
+
+  /* SCORE BARS */
+  .score-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .score-label{width:20px;font-weight:700;font-size:14px}
+  .score-bar-wrap{flex:1;height:10px;background:#eee;border-radius:5px;overflow:hidden}
+  .score-bar{height:100%;border-radius:5px;transition:width .6s}
+  .score-pct{width:36px;text-align:right;font-size:13px;color:var(--text2)}
+
+  /* GRID */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+
+  /* DOMAIN SELECT */
+  .domain-chip{padding:8px 14px;border:1.5px solid var(--border);border-radius:20px;cursor:pointer;font-size:13px;background:var(--surface);transition:all .15s;margin:4px}
+  .domain-chip.selected{background:#378ADD;border-color:#378ADD;color:#fff}
+
+  /* TABLE */
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;padding:10px 12px;background:#f5f5f5;border-bottom:1px solid var(--border);font-weight:500;color:var(--text2)}
+  td{padding:10px 12px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+  tr:hover td{background:#fafafa}
+
+  /* HIDDEN */
+  .page{display:none}.page.active{display:block}
+
+  /* COLLAB MATRIX */
+  .matrix-cell{padding:12px;border-radius:var(--radius-sm);font-size:13px;line-height:1.6}
+  
+  /* PRINT / PDF styles */
+  @media print{
+    .nav,.lang-bar,.btn-row,.no-print{display:none!important}
+    .app{padding:0;max-width:100%}
+    .card{break-inside:avoid;border:1px solid #ccc}
+  }
+
+  /* RESPONSIVE */
+  @media(max-width:480px){
+    .grid2{grid-template-columns:1fr}
+    .grid4{grid-template-columns:repeat(2,1fr)}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="logo">DM <span>Academy</span> — Outil DISC</div>
+
+  <div class="lang-bar">
+    <button class="lang-btn active" onclick="setLang('fr')">FR</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+  </div>
+
+  <div class="nav">
+    <button class="nav-btn active" onclick="goPage('quiz')" id="nav-quiz">Test DISC</button>
+    <button class="nav-btn" onclick="goPage('history')" id="nav-history">Historique</button>
+    <button class="nav-btn" onclick="goPage('dashboard')" id="nav-dashboard">Formateur</button>
+    <button class="nav-btn" onclick="goPage('about')" id="nav-about">À propos</button>
+  </div>
+
+  <!-- PAGE QUIZ -->
+  <div id="page-quiz" class="page active"></div>
+
+  <!-- PAGE HISTORY -->
+  <div id="page-history" class="page"></div>
+
+  <!-- PAGE DASHBOARD -->
+  <div id="page-dashboard" class="page"></div>
+
+  <!-- PAGE ABOUT -->
+  <div id="page-about" class="page"></div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+// ============================================================
+// TRANSLATIONS
+// ============================================================
+const T = {
+  fr:{
+    start_title:"Analyse de profil DISC",
+    start_sub:"Découvrez votre style comportemental, vos orientations professionnelles et des conseils de collaboration personnalisés.",
+    start_q:"8 questions · ~3 minutes",
+    start_btn:"Commencer le test",
+    step:"Question",
+    of:"sur",
+    result_title:"Votre profil DISC",
+    dominant:"Profil dominant",
+    score_dist:"Répartition des scores",
+    strengths:"Forces clés",
+    challenges:"Points de vigilance",
+    sectors:"Domaines recommandés",
+    collab_title:"Conseils de collaboration",
+    collab_pick:"Choisissez un profil pour voir les conseils :",
+    with:"Avec un",
+    download_pdf:"Télécharger le rapport PDF",
+    save_result:"Sauvegarder",
+    restart:"Refaire le test",
+    deepen:"Approfondir",
+    history_title:"Historique des résultats",
+    history_empty:"Aucun résultat sauvegardé.",
+    history_clear:"Effacer l'historique",
+    dash_title:"Tableau de bord formateur",
+    dash_empty:"Aucun résultat disponible. Les participants doivent sauvegarder leurs résultats.",
+    dash_dist:"Répartition du groupe",
+    dash_participants:"participant(s)",
+    dash_profiles:"Profils détaillés",
+    about_title:"À propos du modèle DISC",
+    domain_label:"Adapter les domaines à un secteur",
+    domain_pick:"Choisissez un secteur :",
+    domains:["Général","Tech & IT","Santé","Éducation","Commerce","Agriculture","Immobilier"],
+    saved:"Résultat sauvegardé !",
+    already_saved:"Déjà sauvegardé.",
+    name_placeholder:"Votre prénom (optionnel)",
+  },
+  en:{
+    start_title:"DISC Profile Analysis",
+    start_sub:"Discover your behavioral style, ideal career paths and personalized collaboration tips.",
+    start_q:"8 questions · ~3 minutes",
+    start_btn:"Start the test",
+    step:"Question",
+    of:"of",
+    result_title:"Your DISC Profile",
+    dominant:"Dominant profile",
+    score_dist:"Score distribution",
+    strengths:"Key strengths",
+    challenges:"Watch points",
+    sectors:"Recommended fields",
+    collab_title:"Collaboration tips",
+    collab_pick:"Choose a profile to see tips:",
+    with:"With a",
+    download_pdf:"Download PDF report",
+    save_result:"Save result",
+    restart:"Retake test",
+    deepen:"Go deeper",
+    history_title:"Results history",
+    history_empty:"No saved results yet.",
+    history_clear:"Clear history",
+    dash_title:"Trainer dashboard",
+    dash_empty:"No results yet. Participants need to save their results.",
+    dash_dist:"Group distribution",
+    dash_participants:"participant(s)",
+    dash_profiles:"Detailed profiles",
+    about_title:"About the DISC model",
+    domain_label:"Adapt domains to a sector",
+    domain_pick:"Choose a sector:",
+    domains:["General","Tech & IT","Healthcare","Education","Commerce","Agriculture","Real Estate"],
+    saved:"Result saved!",
+    already_saved:"Already saved.",
+    name_placeholder:"Your first name (optional)",
+  }
+};
+let lang = 'fr';
+function t(k){return T[lang][k]||k}
+function setLang(l){
+  lang=l;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.textContent===l.toUpperCase()));
+  renderCurrentPage();
+}
+
+// ============================================================
+// DATA
+// ============================================================
+const DISC_COLORS = {D:'#E24B4A',I:'#EF9F27',S:'#1D9E75',C:'#378ADD'};
+const DISC_BG = {D:'#FCEBEB',I:'#FAEEDA',S:'#E1F5EE',C:'#E6F1FB'};
+const DISC_TXT = {D:'#A32D2D',I:'#633806',S:'#085041',C:'#0C447C'};
+
+const QUESTIONS = {
+  fr:[
+    {text:"Quand un obstacle surgit dans un projet, vous :",opts:[{l:"D",t:"Foncez tête baissée pour le surmonter immédiatement"},{l:"I",t:"Motivez l'équipe avec enthousiasme pour trouver une solution"},{l:"S",t:"Cherchez une méthode stable et éprouvée"},{l:"C",t:"Analysez la situation en détail avant d'agir"}]},
+    {text:"Dans une réunion, vous êtes plutôt celui qui :",opts:[{l:"D",t:"Prend les décisions et oriente les discussions"},{l:"I",t:"Anime et fait participer tout le monde"},{l:"S",t:"Écoute attentivement et soutient les idées"},{l:"C",t:"Pose des questions précises et vérifie les données"}]},
+    {text:"Votre environnement de travail idéal est :",opts:[{l:"D",t:"Autonome, avec des défis constants et des résultats visibles"},{l:"I",t:"Dynamique, social, avec beaucoup d'interactions"},{l:"S",t:"Stable, harmonieux, avec des rôles clairs"},{l:"C",t:"Structuré, calme, avec des processus précis"}]},
+    {text:"Pour prendre une décision importante, vous :",opts:[{l:"D",t:"Décidez rapidement sur la base de votre instinct"},{l:"I",t:"Consultez votre réseau et suivez votre enthousiasme"},{l:"S",t:"Prenez le temps de consulter les personnes concernées"},{l:"C",t:"Rassemblez un maximum de données et analysez chaque option"}]},
+    {text:"Face à un conflit, vous :",opts:[{l:"D",t:"L'affrontez directement et cherchez une résolution rapide"},{l:"I",t:"Essayez de détendre l'atmosphère et réconcilier"},{l:"S",t:"Évitez le conflit et cherchez un compromis doux"},{l:"C",t:"Analysez les faits objectivement pour trouver la solution logique"}]},
+    {text:"Ce que les autres apprécient le plus en vous :",opts:[{l:"D",t:"Votre leadership et capacité à avancer"},{l:"I",t:"Votre créativité, sociabilité et optimisme"},{l:"S",t:"Votre fiabilité, loyauté et patience"},{l:"C",t:"Votre rigueur, précision et analyse"}]},
+    {text:"Dans un projet d'équipe, votre rôle naturel est :",opts:[{l:"D",t:"Le leader qui fixe les objectifs"},{l:"I",t:"L'inspirateur qui génère des idées créatives"},{l:"S",t:"Le soutien fiable qui assure la cohésion"},{l:"C",t:"L'expert qui garantit la qualité du travail"}]},
+    {text:"Votre plus grand défi personnel est :",opts:[{l:"D",t:"Savoir écouter et prendre en compte les émotions"},{l:"I",t:"Rester concentré et finir ce que vous commencez"},{l:"S",t:"Accepter le changement et sortir de votre zone de confort"},{l:"C",t:"Agir même sans toutes les informations disponibles"}]},
+  ],
+  en:[
+    {text:"When an obstacle arises in a project, you:",opts:[{l:"D",t:"Push through immediately to overcome it"},{l:"I",t:"Energize the team enthusiastically to find a solution"},{l:"S",t:"Look for a stable, proven method"},{l:"C",t:"Analyze the situation in detail before acting"}]},
+    {text:"In a meeting, you are the one who:",opts:[{l:"D",t:"Makes decisions and drives discussions"},{l:"I",t:"Facilitates and gets everyone involved"},{l:"S",t:"Listens carefully and supports others' ideas"},{l:"C",t:"Asks precise questions and checks the data"}]},
+    {text:"Your ideal work environment is:",opts:[{l:"D",t:"Autonomous, with constant challenges and visible results"},{l:"I",t:"Dynamic, social, with lots of human interaction"},{l:"S",t:"Stable, harmonious, with clear and predictable roles"},{l:"C",t:"Structured, calm, with precise processes"}]},
+    {text:"To make an important decision, you:",opts:[{l:"D",t:"Decide quickly based on instinct and target outcomes"},{l:"I",t:"Consult your network and follow your enthusiasm"},{l:"S",t:"Take time to consult the people involved"},{l:"C",t:"Gather as much data as possible and analyze every option"}]},
+    {text:"When faced with a conflict, you:",opts:[{l:"D",t:"Confront it directly and seek a quick resolution"},{l:"I",t:"Try to lighten the mood and reconcile the parties"},{l:"S",t:"Avoid the conflict and seek a gentle compromise"},{l:"C",t:"Analyze the facts objectively to find the logical solution"}]},
+    {text:"What others appreciate most about you:",opts:[{l:"D",t:"Your leadership, energy and ability to move forward"},{l:"I",t:"Your creativity, sociability and optimism"},{l:"S",t:"Your reliability, loyalty and patience"},{l:"C",t:"Your thoroughness, precision and analytical thinking"}]},
+    {text:"In a team project, your natural role is:",opts:[{l:"D",t:"The leader who sets objectives and drives action"},{l:"I",t:"The inspirer who generates creative ideas"},{l:"S",t:"The reliable support who ensures cohesion"},{l:"C",t:"The expert who guarantees quality and accuracy"}]},
+    {text:"Your greatest personal challenge is:",opts:[{l:"D",t:"Learning to listen and consider others' emotions"},{l:"I",t:"Staying focused and finishing what you start"},{l:"S",t:"Accepting change and stepping out of your comfort zone"},{l:"C",t:"Acting even without complete information"}]},
+  ]
+};
+
+const DISC_DATA = {
+  fr:{
+    D:{name:"Dominant",
+      desc:"Orienté résultats, direct, ambitieux et décisif. Vous aimez relever des défis et prendre le contrôle des situations.",
+      forces:["Leadership naturel","Prise de décision rapide","Orientation résultats","Courage et détermination"],
+      defis:["Peut sembler autoritaire","Impatience avec les autres","Difficulté à déléguer","Manque d'écoute émotionnelle"],
+      metiers:{
+        "Général":["Entrepreneur / CEO","Chef de projet","Directeur commercial","Manager opérationnel","Consultant stratégie","Avocat d'affaires"],
+        "Tech & IT":["CTO / Directeur technique","Chef de produit (Product Manager)","Directeur de projet IT","Entrepreneur tech","Responsable infrastructure"],
+        "Santé":["Médecin urgentiste","Directeur d'hôpital","Chirurgien","Responsable qualité santé","Directeur de clinique"],
+        "Éducation":["Directeur d'établissement","Responsable pédagogique","Fondateur d'école","Formateur senior","Coach de dirigeants"],
+        "Commerce":["Directeur commercial","Key Account Manager","Chef des ventes","Directeur franchise","Entrepreneur e-commerce"],
+        "Agriculture":["Exploitant agricole","Directeur de coopérative","Manager agro-industriel","Responsable filière","Entrepreneur agri"],
+        "Immobilier":["Promoteur immobilier","Directeur d'agence","Négociateur senior","Investisseur","Développeur foncier"],
+      },
+      collab:{D:"Fixez des objectifs communs clairs. Soyez direct et factuel. Évitez les détails inutiles.",
+              I:"Valorisez leur enthousiasme, mais recadrez vers les résultats concrets.",
+              S:"Soyez patient et explicatif. Donnez-leur le temps de s'adapter.",
+              C:"Respectez leur besoin de données. Préparez des arguments solides."}},
+    I:{name:"Influent",
+      desc:"Enthousiaste, communicatif, créatif et inspirant. Vous excellez dans les relations humaines et la motivation.",
+      forces:["Communication et persuasion","Créativité et innovation","Enthousiasme contagieux","Réseau et relations"],
+      defis:["Peut manquer de rigueur","Distraction facile","Difficulté à terminer","Sensibilité aux critiques"],
+      metiers:{
+        "Général":["Commercial / Marketeur","Formateur / Coach","Relations publiques","Créatif / Designer","Community manager","Animateur"],
+        "Tech & IT":["UX Designer","Growth Hacker","Community Manager tech","Evangéliste produit","Responsable communication digitale"],
+        "Santé":["Infirmier(ère)","Psychologue","Médecin généraliste","Coordinateur patient","Responsable communication santé"],
+        "Éducation":["Enseignant / Formateur","Animateur pédagogique","Conseiller d'orientation","Coach scolaire","Créateur de contenus éducatifs"],
+        "Commerce":["Commercial terrain","Responsable marketing","Chef de rayon","Animateur commercial","Responsable expérience client"],
+        "Agriculture":["Conseiller agricole","Responsable formation agri","Agent de vulgarisation","Commercial intrants","Responsable communication coopérative"],
+        "Immobilier":["Agent immobilier","Responsable marketing immobilier","Conseiller en investissement","Gestionnaire relation client","Chargé de communication"],
+      },
+      collab:{D:"Soyez concis et orienté action. Montrez l'impact concret de vos idées.",
+              I:"Créez ensemble, partagez l'enthousiasme. Fixez des points de contrôle.",
+              S:"Appréciez leur stabilité. Donnez de la reconnaissance sincère.",
+              C:"Présentez vos idées avec des données concrètes à l'appui."}},
+    S:{name:"Stable",
+      desc:"Fiable, patient, loyal et orienté équipe. Vous créez l'harmonie et êtes le pilier sur lequel les autres s'appuient.",
+      forces:["Fiabilité et constance","Écoute active","Esprit d'équipe fort","Gestion des relations"],
+      defis:["Résistance au changement","Difficulté à s'affirmer","Trop de compromis","Évitement des conflits"],
+      metiers:{
+        "Général":["RH / Gestionnaire talents","Assistant de direction","Enseignant / Formateur","Travailleur social","Infirmier","Coordinateur projet"],
+        "Tech & IT":["Support technique","Chef de projet junior","Développeur back-end","Administrateur systèmes","Technicien helpdesk"],
+        "Santé":["Infirmier(ère) de soins","Aide-soignant","Kinésithérapeute","Pharmacien","Coordinateur soins palliatifs"],
+        "Éducation":["Instituteur / Professeur","Conseiller principal d'éducation","Bibliothécaire","Auxiliaire de vie scolaire","Formateur en entreprise"],
+        "Commerce":["Gestionnaire de stock","Service client","Acheteur","Responsable logistique","Assistant commercial"],
+        "Agriculture":["Technicien agricole","Agent de terrain","Opérateur de production","Responsable irrigation","Gestionnaire troupeau"],
+        "Immobilier":["Gestionnaire de biens","Property manager","Syndic de copropriété","Chargé de relation locataire","Technicien maintenance"],
+      },
+      collab:{D:"Expliquez le pourquoi des décisions. Donnez-leur le temps de s'adapter.",
+              I:"Leur loyauté est précieuse. Donnez-leur un cadre clair et stable.",
+              S:"Construisez une relation de confiance profonde. Travaillez dans la durée.",
+              C:"Communiquez clairement les attentes et délais. Valorisez leur rigueur."}},
+    C:{name:"Consciencieux",
+      desc:"Analytique, précis, méthodique et orienté qualité. Vous excellez dans les environnements qui requièrent rigueur et expertise.",
+      forces:["Analyse et rigueur","Attention aux détails","Expertise technique","Respect des processus"],
+      defis:["Perfectionnisme paralysant","Difficulté à décider vite","Peut sembler distant","Tendance à la suranalyse"],
+      metiers:{
+        "Général":["Développeur / Data analyst","Comptable / Auditeur","Ingénieur / Technicien","Chercheur","Juriste / Notaire","Architecte"],
+        "Tech & IT":["Développeur full-stack","Data scientist","Architecte logiciel","Ingénieur DevOps","Analyste cybersécurité","DBA"],
+        "Santé":["Biologiste","Radiologue","Pharmacien chercheur","Médecin spécialiste","Responsable qualité labo"],
+        "Éducation":["Chercheur académique","Professeur universitaire","Ingénieur pédagogique","Responsable qualité formation","Statisticien éducatif"],
+        "Commerce":["Contrôleur de gestion","Analyste marché","Responsable qualité","Acheteur stratégique","Auditeur interne"],
+        "Agriculture":["Agronome","Ingénieur agroalimentaire","Responsable qualité production","Technicien sol","Chercheur en agronomie"],
+        "Immobilier":["Notaire","Expert immobilier","Juriste foncier","Responsable conformité","Géomètre-expert"],
+      },
+      collab:{D:"Préparez vos arguments avec des faits. Respectez leur besoin de rapidité.",
+              I:"Donnez-leur de la structure. Valorisez leur expertise avec des données.",
+              S:"Partagez le soin pour la qualité. Donnez des délais clairs.",
+              C:"Soyez précis et documenté. Échangez sur les méthodes et standards."}}
+  },
+  en:{
+    D:{name:"Dominant",
+      desc:"Results-oriented, direct, ambitious and decisive. You love taking on challenges and taking control of situations.",
+      forces:["Natural leadership","Fast decision-making","Results orientation","Courage and determination"],
+      defis:["Can seem authoritative","Impatience with others","Difficulty delegating","Lacks emotional listening"],
+      metiers:{
+        "General":["Entrepreneur / CEO","Project Manager","Sales Director","Operations Manager","Strategy Consultant","Business Lawyer"],
+        "Tech & IT":["CTO","Product Manager","IT Project Director","Tech Entrepreneur","Infrastructure Manager"],
+        "Healthcare":["Emergency Physician","Hospital Director","Surgeon","Healthcare Quality Manager","Clinic Director"],
+        "Education":["School Principal","Curriculum Director","School Founder","Senior Trainer","Executive Coach"],
+        "Commerce":["Sales Director","Key Account Manager","Head of Sales","Franchise Director","E-commerce Entrepreneur"],
+        "Agriculture":["Farm Owner","Cooperative Director","Agro-industrial Manager","Supply Chain Manager","Agri-Entrepreneur"],
+        "Real Estate":["Property Developer","Agency Director","Senior Negotiator","Investor","Land Developer"],
+      },
+      collab:{D:"Set clear common goals. Be direct and factual. Avoid unnecessary details.",
+              I:"Value their enthusiasm but redirect to concrete results.",
+              S:"Be patient and explanatory. Give them time to adapt to changes.",
+              C:"Respect their need for data. Prepare solid, well-structured arguments."}},
+    I:{name:"Influential",
+      desc:"Enthusiastic, communicative, creative and inspiring. You excel at human relations and motivating teams.",
+      forces:["Communication and persuasion","Creativity and innovation","Contagious enthusiasm","Networking and relationships"],
+      defis:["Can lack rigor","Easily distracted","Difficulty finishing tasks","Sensitive to criticism"],
+      metiers:{
+        "General":["Sales / Marketer","Trainer / Coach","Public Relations","Creative / Designer","Community Manager","Facilitator"],
+        "Tech & IT":["UX Designer","Growth Hacker","Tech Community Manager","Product Evangelist","Digital Communication Manager"],
+        "Healthcare":["Nurse","Psychologist","General Practitioner","Patient Coordinator","Health Communication Manager"],
+        "Education":["Teacher / Trainer","Educational Facilitator","Career Counselor","School Coach","Educational Content Creator"],
+        "Commerce":["Field Sales Rep","Marketing Manager","Department Head","Sales Animator","Customer Experience Manager"],
+        "Agriculture":["Agricultural Advisor","Training Manager","Extension Agent","Input Sales Rep","Cooperative Communication Manager"],
+        "Real Estate":["Real Estate Agent","Real Estate Marketing Manager","Investment Advisor","Client Relationship Manager","Communication Officer"],
+      },
+      collab:{D:"Be concise and action-oriented. Show the concrete impact of your ideas.",
+              I:"Create together, share enthusiasm. Set checkpoints.",
+              S:"Appreciate their stability. Give sincere recognition.",
+              C:"Back your ideas with concrete data."}},
+    S:{name:"Stable",
+      desc:"Reliable, patient, loyal and team-oriented. You create harmony and are the pillar others rely on.",
+      forces:["Reliability and consistency","Active listening","Strong team spirit","Relationship management"],
+      defis:["Resistance to change","Difficulty asserting oneself","Too many compromises","Conflict avoidance"],
+      metiers:{
+        "General":["HR / Talent Manager","Executive Assistant","Teacher / Trainer","Social Worker","Nurse","Project Coordinator"],
+        "Tech & IT":["Technical Support","Junior Project Manager","Back-end Developer","Systems Administrator","Helpdesk Technician"],
+        "Healthcare":["Care Nurse","Healthcare Assistant","Physiotherapist","Pharmacist","Palliative Care Coordinator"],
+        "Education":["Primary/Secondary Teacher","Head of Student Affairs","Librarian","School Life Assistant","Corporate Trainer"],
+        "Commerce":["Stock Manager","Customer Service","Buyer","Logistics Manager","Sales Assistant"],
+        "Agriculture":["Agricultural Technician","Field Agent","Production Operator","Irrigation Manager","Herd Manager"],
+        "Real Estate":["Property Manager","Asset Manager","Condo Manager","Tenant Relations Officer","Maintenance Technician"],
+      },
+      collab:{D:"Explain the why behind decisions. Give them time to adapt.",
+              I:"Their loyalty is precious. Give them a clear and stable framework.",
+              S:"Build deep trust. Work long-term and harmoniously.",
+              C:"Communicate expectations and deadlines clearly. Value their rigor."}},
+    C:{name:"Conscientious",
+      desc:"Analytical, precise, methodical and quality-oriented. You excel in environments requiring rigor and expertise.",
+      forces:["Analysis and rigor","Attention to detail","Technical expertise","Process compliance"],
+      defis:["Paralyzing perfectionism","Difficulty deciding quickly","Can seem distant","Tendency to over-analyze"],
+      metiers:{
+        "General":["Developer / Data Analyst","Accountant / Auditor","Engineer / Technician","Researcher","Lawyer / Notary","Architect"],
+        "Tech & IT":["Full-stack Developer","Data Scientist","Software Architect","DevOps Engineer","Cybersecurity Analyst","DBA"],
+        "Healthcare":["Biologist","Radiologist","Research Pharmacist","Medical Specialist","Lab Quality Manager"],
+        "Education":["Academic Researcher","University Professor","Instructional Designer","Training Quality Manager","Educational Statistician"],
+        "Commerce":["Management Controller","Market Analyst","Quality Manager","Strategic Buyer","Internal Auditor"],
+        "Agriculture":["Agronomist","Food Engineer","Production Quality Manager","Soil Technician","Agronomy Researcher"],
+        "Real Estate":["Notary","Property Appraiser","Land Lawyer","Compliance Officer","Land Surveyor"],
+      },
+      collab:{D:"Prepare fact-based arguments. Respect their need for speed.",
+              I:"Give them structure. Back up their expertise with data.",
+              S:"Share the care for quality. Set clear deadlines.",
+              C:"Be precise and documented. Discuss methods and standards."}}
+  }
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let state = {
+  page:'quiz',
+  quiz:{step:'intro', answers:[], scores:{D:0,I:0,S:0,C:0}, profile:null, name:'', domain:'Général', saved:false},
+};
+
+// ============================================================
+// STORAGE
+// ============================================================
+function getHistory(){try{return JSON.parse(localStorage.getItem('disc_history')||'[]')}catch{return[]}}
+function saveToHistory(entry){
+  const h=getHistory();
+  h.unshift(entry);
+  if(h.length>50)h.pop();
+  localStorage.setItem('disc_history',JSON.stringify(h));
+}
+function clearHistory(){localStorage.removeItem('disc_history')}
+
+// ============================================================
+// ROUTING
+// ============================================================
+function goPage(p){
+  state.page=p;
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav-'+p).classList.add('active');
+  renderCurrentPage();
+}
+function renderCurrentPage(){
+  ['quiz','history','dashboard','about'].forEach(p=>{
+    document.getElementById('page-'+p).classList.toggle('active', state.page===p);
+  });
+  if(state.page==='quiz') renderQuiz();
+  if(state.page==='history') renderHistory();
+  if(state.page==='dashboard') renderDashboard();
+  if(state.page==='about') renderAbout();
+}
+
+// ============================================================
+// QUIZ
+// ============================================================
+function shuffle(a){return a.slice().sort(()=>Math.random()-0.5)}
+
+function renderQuiz(){
+  const el = document.getElementById('page-quiz');
+  const q = state.quiz;
+  if(q.step==='intro') el.innerHTML = renderIntro();
+  else if(q.step==='question') el.innerHTML = renderQuestion();
+  else if(q.step==='result') el.innerHTML = renderResult();
+  else if(q.step==='collab') el.innerHTML = renderCollab();
+}
+
+function renderIntro(){
+  const domainKey = lang==='fr'?'Général':'General';
+  return `<div class="card" style="text-align:center;padding:32px 24px">
+    <div style="display:flex;justify-content:center;gap:12px;margin-bottom:24px">
+      ${['D','I','S','C'].map(k=>`<div class="disc-badge badge-${k}">${k}</div>`).join('')}
+    </div>
+    <h1 style="font-size:22px;font-weight:600;margin-bottom:10px">${t('start_title')}</h1>
+    <p style="color:var(--text2);font-size:15px;max-width:460px;margin:0 auto 24px;line-height:1.7">${t('start_sub')}</p>
+    <input id="participant-name" type="text" placeholder="${t('name_placeholder')}" style="display:block;margin:0 auto 16px;width:260px;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;text-align:center"/>
+    <p style="color:var(--text3);font-size:13px;margin-bottom:20px">${t('start_q')}</p>
+    <button class="btn btn-primary" onclick="startQuiz()">${t('start_btn')}</button>
+  </div>`
+}
+
+function renderQuestion(){
+  const q = state.quiz;
+  const qs = QUESTIONS[lang];
+  const current = qs[q.answers.length];
+  const shuffled = shuffle(current.opts);
+  const pct = Math.round(q.answers.length / qs.length * 100);
+  return `<div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
+      <span style="font-size:13px;color:var(--text3)">${t('step')} ${q.answers.length+1} ${t('of')} ${qs.length}</span>
+    </div>
+    <div class="progress"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="card">
+      <p style="font-size:16px;font-weight:500;margin-bottom:18px;line-height:1.6">${current.text}</p>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${shuffled.map(o=>`<button class="btn" style="text-align:left;padding:13px 16px;line-height:1.5;font-size:14px" onclick="answer('${o.l}')">${o.t}</button>`).join('')}
+      </div>
+    </div>
+  </div>`
+}
+
+function renderResult(){
+  const q = state.quiz;
+  const p = q.profile;
+  const data = DISC_DATA[lang][p];
+  const total = Object.values(q.scores).reduce((a,b)=>a+b,0);
+  const sorted = Object.entries(q.scores).sort((a,b)=>b[1]-a[1]);
+  const domLang = lang==='fr'?'Général':'General';
+  const domainKey = t('domains')[t('domains').indexOf(q.domain)] || domLang;
+  const metiers = data.metiers[q.domain] || data.metiers[domLang];
+
+  return `<div>
+    <div class="card" style="background:${DISC_BG[p]};border-color:${DISC_COLORS[p]}40">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
+        <div class="disc-badge badge-${p}">${p}</div>
+        <div>
+          <div style="font-size:18px;font-weight:600;color:${DISC_TXT[p]}">${t('dominant')} : ${data.name}</div>
+          <div style="font-size:13px;color:${DISC_TXT[p]};opacity:.8">${Math.round(q.scores[p]/total*100)}% dominant${q.name?' — '+q.name:''}</div>
+        </div>
+      </div>
+      <p style="font-size:14px;color:${DISC_TXT[p]};line-height:1.7">${data.desc}</p>
+    </div>
+
+    <div class="card card-sm">
+      <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:12px">${t('score_dist')}</div>
+      ${sorted.map(([k,v])=>`<div class="score-row">
+        <span class="score-label" style="color:${DISC_COLORS[k]}">${k}</span>
+        <div class="score-bar-wrap"><div class="score-bar" style="width:${Math.round(v/total*100)}%;background:${DISC_COLORS[k]}"></div></div>
+        <span class="score-pct">${Math.round(v/total*100)}%</span>
+      </div>`).join('')}
+    </div>
+
+    <div class="grid2">
+      <div class="card card-sm">
+        <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:10px">${t('strengths')}</div>
+        ${data.forces.map(f=>`<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:7px;font-size:13px"><span style="color:#1D9E75;flex-shrink:0">✓</span>${f}</div>`).join('')}
+      </div>
+      <div class="card card-sm">
+        <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:10px">${t('challenges')}</div>
+        ${data.defis.map(d=>`<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:7px;font-size:13px"><span style="color:#E24B4A;flex-shrink:0">⚠</span>${d}</div>`).join('')}
+      </div>
+    </div>
+
+    <div class="card card-sm">
+      <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:10px">${t('domain_label')}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">
+        ${t('domains').map(d=>`<span class="domain-chip${q.domain===d?' selected':''}" onclick="setDomain('${d}')">${d}</span>`).join('')}
+      </div>
+      <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:10px">${t('sectors')}</div>
+      <div style="display:flex;flex-wrap:wrap">
+        ${metiers.map(m=>`<span class="pill" style="background:${DISC_BG[p]};color:${DISC_TXT[p]};border:1px solid ${DISC_COLORS[p]}30">${m}</span>`).join('')}
+      </div>
+    </div>
+
+    <div class="card card-sm">
+      <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:10px">${t('collab_pick')}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${['D','I','S','C'].map(k=>`<button class="btn btn-sm" style="border-color:${DISC_COLORS[k]}50;color:${DISC_COLORS[k]}" onclick="showCollab('${k}')">${t('with')} ${k} — ${DISC_DATA[lang][k].name}</button>`).join('')}
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-sm" onclick="restartQuiz()">↺ ${t('restart')}</button>
+      <button class="btn btn-sm${q.saved?' ':' btn-primary'}" onclick="saveResult()" id="save-btn">${q.saved?t('already_saved'):'💾 '+t('save_result')}</button>
+      <button class="btn btn-sm btn-primary" onclick="downloadPDF()">⬇ ${t('download_pdf')}</button>
+    </div>
+  </div>`
+}
+
+function renderCollab(){
+  const q = state.quiz;
+  const me = DISC_DATA[lang][q.profile];
+  const them = DISC_DATA[lang][q.collab_target];
+  const advice = me.collab[q.collab_target];
+  return `<div>
+    <button class="btn btn-sm no-print" onclick="backToResult()" style="margin-bottom:16px">← ${lang==='fr'?'Retour':'Back'}</button>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+        <div class="disc-badge badge-${q.profile}">${q.profile}</div>
+        <div style="flex:1;height:2px;background:var(--border);border-radius:1px"></div>
+        <div class="disc-badge badge-${q.collab_target}">${q.collab_target}</div>
+      </div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:8px">${DISC_DATA[lang][q.collab_target].name} — profil</div>
+      <p style="font-size:14px;color:var(--text);line-height:1.7;margin-bottom:16px">${them.desc}</p>
+      <div style="border-left:3px solid ${DISC_COLORS[q.profile]};padding-left:14px;margin-top:12px">
+        <div style="font-size:12px;font-weight:500;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">${t('collab_title')}</div>
+        <p style="font-size:15px;line-height:1.8;color:var(--text)">${advice}</p>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-sm" onclick="backToResult()">← ${lang==='fr'?'Autres profils':'Other profiles'}</button>
+      <button class="btn btn-sm btn-primary" onclick="downloadPDF()">⬇ ${t('download_pdf')}</button>
+    </div>
+  </div>`
+}
+
+// ============================================================
+// HISTORY PAGE
+// ============================================================
+function renderHistory(){
+  const el = document.getElementById('page-history');
+  const h = getHistory();
+  if(h.length===0){
+    el.innerHTML=`<div class="card" style="text-align:center;padding:40px 20px;color:var(--text2)">${t('history_empty')}</div>`;
+    return;
+  }
+  el.innerHTML=`<div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 style="font-size:18px;font-weight:500">${t('history_title')}</h2>
+      <button class="btn btn-sm" onclick="clearHistoryUI()" style="color:#E24B4A;border-color:#E24B4A30">${t('history_clear')}</button>
+    </div>
+    ${h.map((r,i)=>`<div class="card card-sm" style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+      <div class="disc-badge badge-${r.profile}" style="width:38px;height:38px;font-size:15px">${r.profile}</div>
+      <div style="flex:1">
+        <div style="font-weight:500;font-size:14px">${r.name||DISC_DATA[lang][r.profile]?.name||r.profile}</div>
+        <div style="font-size:12px;color:var(--text3)">${r.date} · ${DISC_DATA[lang][r.profile]?.name}</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        ${['D','I','S','C'].map(k=>`<span style="font-size:11px;font-weight:500;color:${DISC_COLORS[k]}">${k}:${r.scores[k]}</span>`).join(' ')}
+      </div>
+    </div>`).join('')}
+  </div>`
+}
+
+// ============================================================
+// DASHBOARD PAGE
+// ============================================================
+function renderDashboard(){
+  const el = document.getElementById('page-dashboard');
+  const h = getHistory();
+  if(h.length===0){
+    el.innerHTML=`<div><h2 style="font-size:18px;font-weight:500;margin-bottom:16px">${t('dash_title')}</h2><div class="card" style="text-align:center;padding:40px 20px;color:var(--text2)">${t('dash_empty')}</div></div>`;
+    return;
+  }
+  const counts={D:0,I:0,S:0,C:0};
+  h.forEach(r=>counts[r.profile]++);
+  const total=h.length;
+  el.innerHTML=`<div>
+    <h2 style="font-size:18px;font-weight:500;margin-bottom:16px">${t('dash_title')} — ${total} ${t('dash_participants')}</h2>
+    <div class="card card-sm" style="margin-bottom:14px">
+      <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:12px">${t('dash_dist')}</div>
+      <div class="grid4">
+        ${['D','I','S','C'].map(k=>`<div style="background:${DISC_BG[k]};border-radius:var(--radius);padding:14px;text-align:center">
+          <div style="font-size:22px;font-weight:700;color:${DISC_COLORS[k]}">${k}</div>
+          <div style="font-size:20px;font-weight:600;margin:4px 0;color:${DISC_TXT[k]}">${counts[k]}</div>
+          <div style="font-size:12px;color:${DISC_TXT[k]}">${Math.round(counts[k]/total*100)}%</div>
+          <div style="height:5px;border-radius:3px;background:${DISC_COLORS[k]}30;margin-top:8px;overflow:hidden">
+            <div style="height:100%;border-radius:3px;background:${DISC_COLORS[k]};width:${Math.round(counts[k]/total*100)}%"></div>
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:10px">${t('dash_profiles')}</div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>#</th><th>${lang==='fr'?'Prénom':'Name'}</th><th>${lang==='fr'?'Profil':'Profile'}</th><th>D</th><th>I</th><th>S</th><th>C</th><th>${lang==='fr'?'Date':'Date'}</th></tr></thead>
+        <tbody>
+          ${h.map((r,i)=>`<tr>
+            <td style="color:var(--text3)">${i+1}</td>
+            <td style="font-weight:500">${r.name||'—'}</td>
+            <td><span class="pill" style="background:${DISC_BG[r.profile]};color:${DISC_TXT[r.profile]}">${r.profile} — ${DISC_DATA[lang][r.profile]?.name}</span></td>
+            <td style="color:${DISC_COLORS.D};font-weight:500">${r.scores.D}</td>
+            <td style="color:${DISC_COLORS.I};font-weight:500">${r.scores.I}</td>
+            <td style="color:${DISC_COLORS.S};font-weight:500">${r.scores.S}</td>
+            <td style="color:${DISC_COLORS.C};font-weight:500">${r.scores.C}</td>
+            <td style="color:var(--text3);font-size:12px">${r.date}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`
+}
+
+// ============================================================
+// ABOUT PAGE
+// ============================================================
+function renderAbout(){
+  const el = document.getElementById('page-about');
+  el.innerHTML=`<div>
+    <h2 style="font-size:18px;font-weight:500;margin-bottom:16px">${t('about_title')}</h2>
+    <div class="card" style="margin-bottom:14px">
+      <p style="font-size:14px;line-height:1.8;color:var(--text2)">${lang==='fr'?
+        'Le modèle DISC est un outil d\'analyse comportementale développé par le psychologue William Moulton Marston dans les années 1920 et popularisé par Walter Clarke dans les années 1950. Il identifie quatre styles comportementaux dominants : Dominant (D), Influent (I), Stable (S) et Consciencieux (C).'
+        :'The DISC model is a behavioral assessment tool developed by psychologist William Moulton Marston in the 1920s and popularized by Walter Clarke in the 1950s. It identifies four dominant behavioral styles: Dominant (D), Influential (I), Stable (S) and Conscientious (C).'}</p>
+    </div>
+    <div class="grid2">
+      ${['D','I','S','C'].map(k=>`<div class="card card-sm" style="background:${DISC_BG[k]};border-color:${DISC_COLORS[k]}30">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div class="disc-badge badge-${k}" style="width:36px;height:36px;font-size:15px">${k}</div>
+          <div style="font-weight:600;font-size:15px;color:${DISC_TXT[k]}">${DISC_DATA[lang][k].name}</div>
+        </div>
+        <p style="font-size:13px;color:${DISC_TXT[k]};line-height:1.6">${DISC_DATA[lang][k].desc}</p>
+      </div>`).join('')}
+    </div>
+    <div class="card" style="margin-top:14px;text-align:center;padding:16px">
+      <p style="font-size:12px;color:var(--text3)">Développé par <strong>DM Academy</strong> · Abobo, Abidjan, Côte d'Ivoire</p>
+    </div>
+  </div>`
+}
+
+// ============================================================
+// ACTIONS
+// ============================================================
+function startQuiz(){
+  const nameEl = document.getElementById('participant-name');
+  state.quiz.name = nameEl ? nameEl.value.trim() : '';
+  state.quiz.step='question';
+  state.quiz.answers=[];
+  state.quiz.scores={D:0,I:0,S:0,C:0};
+  state.quiz.profile=null;
+  state.quiz.saved=false;
+  state.quiz.domain=lang==='fr'?'Général':'General';
+  renderQuiz();
+}
+
+function answer(l){
+  state.quiz.scores[l]++;
+  state.quiz.answers.push(l);
+  if(state.quiz.answers.length===QUESTIONS[lang].length){
+    state.quiz.profile=Object.entries(state.quiz.scores).sort((a,b)=>b[1]-a[1])[0][0];
+    state.quiz.step='result';
+  }
+  renderQuiz();
+}
+
+function setDomain(d){
+  state.quiz.domain=d;
+  renderQuiz();
+}
+
+function showCollab(t){
+  state.quiz.collab_target=t;
+  state.quiz.step='collab';
+  renderQuiz();
+}
+
+function backToResult(){
+  state.quiz.step='result';
+  renderQuiz();
+}
+
+function restartQuiz(){
+  state.quiz.step='intro';
+  renderQuiz();
+}
+
+function saveResult(){
+  if(state.quiz.saved) return;
+  const q=state.quiz;
+  const now=new Date();
+  const entry={
+    profile:q.profile,
+    scores:{...q.scores},
+    name:q.name||'',
+    date:now.toLocaleDateString('fr-FR'),
+    timestamp:now.getTime()
+  };
+  saveToHistory(entry);
+  state.quiz.saved=true;
+  const btn=document.getElementById('save-btn');
+  if(btn){btn.textContent='✓ '+t('saved');btn.classList.remove('btn-primary')}
+}
+
+function clearHistoryUI(){
+  if(confirm(lang==='fr'?'Effacer tout l\'historique ?':'Clear all history?')){
+    clearHistory();
+    renderHistory();
+  }
+}
+
+// ============================================================
+// PDF EXPORT
+// ============================================================
+function downloadPDF(){
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const q = state.quiz;
+  if(!q.profile) return;
+  const data = DISC_DATA[lang][q.profile];
+  const total = Object.values(q.scores).reduce((a,b)=>a+b,0);
+  const color = {D:[226,75,74],I:[239,159,39],S:[29,158,117],C:[55,138,221]};
+  const c = color[q.profile];
+
+  // Header band
+  doc.setFillColor(...c);
+  doc.rect(0,0,210,40,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(22);doc.setFont('helvetica','bold');
+  doc.text('DISC — '+data.name, 20, 18);
+  doc.setFontSize(11);doc.setFont('helvetica','normal');
+  doc.text((q.name?q.name+' · ':'')+'DM Academy · '+new Date().toLocaleDateString('fr-FR'), 20, 28);
+  doc.text('Profil dominant : '+q.profile+' ('+Math.round(q.scores[q.profile]/total*100)+'%)', 20, 36);
+
+  let y=52;
+  // Description
+  doc.setTextColor(40,40,40);
+  doc.setFontSize(10);doc.setFont('helvetica','normal');
+  const descLines=doc.splitTextToSize(data.desc,170);
+  doc.text(descLines,20,y);y+=descLines.length*5+8;
+
+  // Scores
+  doc.setFillColor(245,245,245);doc.rect(15,y,180,6+Object.keys(q.scores).length*8,'F');
+  doc.setFontSize(9);doc.setFont('helvetica','bold');
+  doc.setTextColor(80,80,80);doc.text(t('score_dist').toUpperCase(),20,y+5);y+=10;
+  Object.entries(q.scores).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{
+    const pct=Math.round(v/total*100);
+    const kc=color[k];
+    doc.setFont('helvetica','bold');doc.setTextColor(...kc);
+    doc.text(k,20,y);
+    doc.setFillColor(...kc);
+    doc.rect(30,y-4,pct*1.3,5,'F');
+    doc.setTextColor(80,80,80);doc.setFont('helvetica','normal');
+    doc.text(pct+'%',138,y);
+    y+=8;
+  });y+=6;
+
+  // Forces & Défis
+  const col=(title,items,tx,ty)=>{
+    doc.setFont('helvetica','bold');doc.setTextColor(80,80,80);doc.setFontSize(9);
+    doc.text(title.toUpperCase(),tx,ty);ty+=6;
+    doc.setFont('helvetica','normal');doc.setTextColor(60,60,60);
+    items.forEach(i=>{doc.text('• '+i,tx,ty);ty+=6;});
+    return ty;
+  };
+  const yf=col(t('strengths'),data.forces,20,y);
+  const yd=col(t('challenges'),data.defis,110,y);
+  y=Math.max(yf,yd)+6;
+
+  // Métiers
+  const defDomain=lang==='fr'?'Général':'General';
+  const metiers=data.metiers[q.domain]||data.metiers[defDomain];
+  doc.setFont('helvetica','bold');doc.setTextColor(80,80,80);doc.setFontSize(9);
+  doc.text((t('sectors')+' ('+q.domain+')').toUpperCase(),20,y);y+=6;
+  doc.setFont('helvetica','normal');doc.setTextColor(60,60,60);
+  metiers.forEach(m=>{doc.text('→ '+m,22,y);y+=6;});
+  y+=6;
+
+  // Collaboration tips
+  doc.setFont('helvetica','bold');doc.setTextColor(80,80,80);doc.setFontSize(9);
+  doc.text(t('collab_title').toUpperCase(),20,y);y+=7;
+  ['D','I','S','C'].forEach(k=>{
+    if(y>270){doc.addPage();y=20;}
+    const kc=color[k];
+    doc.setFillColor(...kc);doc.rect(20,y-4,8,6,'F');
+    doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(8);
+    doc.text(k,22.5,y);
+    doc.setTextColor(60,60,60);doc.setFont('helvetica','normal');doc.setFontSize(9);
+    const lines=doc.splitTextToSize(data.collab[k],148);
+    doc.text(lines,34,y);y+=lines.length*5+4;
+  });
+
+  // Footer
+  doc.setFontSize(8);doc.setTextColor(160,160,160);
+  doc.text('DM Academy · Abobo, Abidjan, Côte d\'Ivoire · Outil DISC',20,290);
+
+  doc.save('DISC_'+q.profile+'_'+(q.name||'profil')+'_'+new Date().toLocaleDateString('fr-FR').replace(/\//g,'-')+'.pdf');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+renderCurrentPage();
+</script>
+</body>
+</html>
